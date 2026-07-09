@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>RAG Component Comparison — Beautiful</title>
+    <style>
+        :root {
+            --bg: #0f1724;
+            --card: #0b1220;
+            --muted: #93a4b8;
+            --accent: #6ee7b7;
+            --accent-2: #60a5fa;
+            --glass: rgba(255, 255, 255, 0.03);
+            --table-head: rgba(255, 255, 255, 0.04);
+            --success: #10b981;
+            --danger: #fb7185;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(180deg, #071025 0%, #081826 100%);
+            color: #e6eef8;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px
+        }
+
+        header h1 {
+            font-size: 20px;
+            margin: 0
+        }
+
+        header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px
+        }
+
+        .search,
+        .select-cat {
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        .search input {
+            background: transparent;
+            border: 0;
+            outline: 0;
+            color: inherit;
+            width: 260px
+        }
+
+        .chip {
+            background: var(--glass);
+            padding: 8px 10px;
+            border-radius: 10px;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .legend .item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .legend .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px
+        }
+
+        section.card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03)
+        }
+
+        section.card h2 {
+            margin: 0 0 10px 0;
+            font-size: 16px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        thead th {
+            background: var(--table-head);
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            text-align: left;
+            color: #cfe7ff;
+            position: relative
+        }
+
+        tbody td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: top
+        }
+
+        tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.012)
+        }
+
+        .metric {
+            display: inline-block;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .tag {
+            font-weight: 600;
+            color: var(--accent-2)
+        }
+
+        .bestfor {
+            color: var(--accent);
+            font-weight: 600
+        }
+
+        .small {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        footer {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center
+        }
+
+        /* tooltip */
+        .hdr {
+            cursor: help;
+        }
+
+        .hdr .tip {
+            display: inline-block;
+            visibility: hidden;
+            width: 260px;
+            background: rgba(10, 13, 20, 0.95);
+            color: #e6eef8;
+            text-align: left;
+            border-radius: 8px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 50;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 6px 18px rgba(2, 6, 23, 0.7);
+            font-size: 12px;
+            line-height: 1.3;
+        }
+
+        thead th:hover .tip {
+            visibility: visible;
+        }
+
+        /* responsive */
+        @media (max-width:920px) {
+            .search input {
+                width: 120px
+            }
+
+            thead th:nth-child(1),
+            tbody td:nth-child(1) {
+                min-width: 140px
+            }
+
+            table {
+                font-size: 12px
+            }
+        }
+
+        /* utilities */
+        .hide {
+            display: none
+        }
+
+        .pill {
+            background: rgba(96, 165, 250, 0.12);
+            color: var(--accent-2);
+            padding: 6px 8px;
+            border-radius: 999px;
+            font-weight: 600
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div style="display:flex;flex-direction:column">
+                <h1>RAG Component Comparison</h1>
+                <p>Quick reference for selecting extractors, table parsers, embeddings, vector DBs and storage for your
+                    RAG system.</p>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+
+                <div class="pill">Gemini 1.5 Flash ready</div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="search" title="Search by name or capability">
+                🔎 <input id="q" placeholder="Search technologies, e.g. 'Camelot' or 'OCR'">
+            </div>
+            <div class="select-cat" title="Filter by category">
+                📚
+                <select id="category" style="background:transparent;border:0;color:var(--muted);outline:0">
+                    <option value="all">All categories</option>
+                    <option value="text_extraction">Text extraction</option>
+                    <option value="image_ocr">Image extraction & OCR</option>
+                    <option value="table_extraction">Table extraction</option>
+                    <option value="vector_db">Vector DB</option>
+                    <option value="embeddings">Embeddings</option>
+                    <option value="storage">Backend storage</option>
+                </select>
+            </div>
+
+            <div style="margin-left:auto" class="small">Filter & search live — click a row for details (console)</div>
+        </div>
+
+        <div class="legend">
+            <div class="item"><span class="dot" style="background:var(--accent)"></span> <span
+                    class="small">Recommended</span></div>
+            <div class="item"><span class="dot" style="background:var(--accent-2)"></span> <span class="small">Good
+                    alternative</span></div>
+            <div class="item"><span class="dot" style="background:var(--success)"></span> <span
+                    class="small">CPU-friendly</span></div>
+            <div class="item"><span class="dot" style="background:var(--danger)"></span> <span class="small">Cloud /
+                    Paid</span></div>
+        </div>
+
+        <main id="cards">
+
+            <!-- Text Extraction -->
+            <section class="card" data-cat="text_extraction">
+                <h2>Text extraction libraries</h2>
+                <table data-table="text_extraction">
+                    <thead>
+                        <tr>
+                            <th>Library</th>
+                            <th class="hdr">Speed<div class="tip">Relative processing speed for typical PDF extraction
+                                    (higher = faster).</div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">How well the tool performs on CPU-only machines
+                                    (no GPU).</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Whether the tool naturally supports storing
+                                    results or needs external persistence.</div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">Ability to handle many/large PDFs efficiently
+                                    and scale up.</div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">Developer-friendliness and setup complexity.
+                                </div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Typical cost model (Free/OSS, or Cloud/Paid).</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Common scenarios where this tool shines.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Short explanation how well
+                                    this tool fits your multi-PDF, text+image+table RAG (Gemini 1.5 Flash on CPU).</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="PyMuPDF fitz">
+                            <td><b>PyMuPDF (fitz)</b>
+                                <div class="small">text & images</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent (CPU)</span></td>
+                            <td><span class="metric">N/A (file)</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Digital PDFs, layout-aware extraction</td>
+                            <td>✅ <em>Best primary extractor</em> — fast, accurate text + image extraction on CPU; ideal
+                                as your RAG ingestion layer.</td>
+                        </tr>
+
+                        <tr data-name="pdfplumber">
+                            <td><b>pdfplumber</b>
+                                <div class="small">coordinates & tables</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Excellent (CPU)</span></td>
+                            <td><span class="metric">N/A</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Precise layout parsing & custom table heuristics</td>
+                            <td>Good for table coordinate extraction when Camelot fails; pair with PyMuPDF for robust
+                                RAG ingestion.</td>
+                        </tr>
+
+                        <tr data-name="pdfminer.six">
+                            <td><b>pdfminer.six</b>
+                                <div class="small">low-level control</div>
+                            </td>
+                            <td><span class="metric">Slow</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">N/A</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Hard</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Custom extraction & text-position work</td>
+                            <td>Use only if you need low-level, fine-grained layout control — otherwise PyMuPDF is
+                                better for RAG speed/ease.</td>
+                        </tr>
+
+                        <tr data-name="pypdf">
+                            <td><b>PyPDF2 / pypdf</b>
+                                <div class="small">manipulation</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">N/A</span></td>
+                            <td><span class="metric">Low</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Merging/splitting and simple text pulls</td>
+                            <td>Great for document ops (split/merge) in pre-processing; not sufficient alone for
+                                extraction in RAG.</td>
+                        </tr>
+
+                        <tr data-name="apache tika">
+                            <td><b>Apache Tika</b>
+                                <div class="small">multi-format</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Moderate (Java)</span></td>
+                            <td><span class="metric">Server-based</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free (infra)</span></td>
+                            <td class="bestfor">Heterogeneous file ingestion at scale</td>
+                            <td>Good when ingesting many file types at scale; heavier infra than needed for a CPU-first
+                                RAG prototype.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Image & OCR -->
+            <section class="card" data-cat="image_ocr">
+                <h2>Image extraction & OCR</h2>
+                <table data-table="image_ocr">
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th class="hdr">Speed<div class="tip">Processing speed for common tasks (higher = faster).
+                                </div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">How well it runs on CPU-only machines.</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Whether outputs are easy to store/persist.</div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">How well it scales to many pages / files.</div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">Installation & API simplicity.</div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Free vs paid/cloud options.</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Typical scenarios where tool excels.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Fit for multi-PDF ingestion
+                                    handling images + OCR in a CPU environment with Gemini LLM.</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="pymupdf images">
+                            <td><b>⭐ PyMuPDF image extract</b>
+                                <div class="small">extract images</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Embedded image extraction for downstream OCR</td>
+                            <td><b>Primary choice</b> — Fast CPU-based extraction of embedded images; works offline. Use
+                                as first step, then feed images to Tesseract for OCR if needed.</td>
+                        </tr>
+
+                        <tr data-name="pdf2image">
+                            <td><b>pdf2image</b>
+                                <div class="small">page rasterization</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Converting pages to images for OCR</td>
+                            <td>Fallback tool when PDFs are fully scanned — rasterize pages before OCR.</td>
+                        </tr>
+
+                        <tr data-name="tesseract">
+                            <td><b>⭐ Tesseract (pytesseract)</b>
+                                <div class="small">OCR</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Excellent (native)</span></td>
+                            <td><span class="metric">N/A</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Open-source OCR for scanned pages</td>
+                            <td><b>Best OCR fallback</b> — Works offline, good CPU performance, handles scanned PDFs
+                                well for RAG ingestion.</td>
+                        </tr>
+
+                        <tr data-name="doctr">
+                            <td><b>DocTR / Layout models</b>
+                                <div class="small">neural OCR & layout</div>
+                            </td>
+                            <td><span class="metric">Slow (CPU)</span></td>
+                            <td><span class="metric">Moderate</span></td>
+                            <td><span class="metric">Model files</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Advanced</span></td>
+                            <td><span class="metric">Free/Open</span></td>
+                            <td class="bestfor">High-quality OCR & layout for scanned complex docs</td>
+                            <td>Use only if many messy scanned PDFs require better accuracy than Tesseract; CPU load is
+                                higher.</td>
+                        </tr>
+
+                        <tr data-name="commercial ocr">
+                            <td><b>Commercial OCR (GCP/AWS)</b>
+                                <div class="small">cloud OCR</div>
+                            </td>
+                            <td><span class="metric">Fast (cloud)</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Paid</span></td>
+                            <td class="bestfor">Enterprise-grade OCR & table detection</td>
+                            <td>Highest OCR accuracy; consider only if cloud & budget are acceptable.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+
+            <!-- Table extraction -->
+            <section class="card" data-cat="table_extraction">
+                <h2>Table extraction</h2>
+                <table data-table="table_extraction">
+                    <thead>
+                        <tr>
+                            <th>Library</th>
+                            <th class="hdr">Speed<div class="tip">How quickly tables are detected/extracted.</div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">Works well on CPU machines?</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Are results straight-forward to save and reuse?
+                                </div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">Handle many pages/large tables efficiently?
+                                </div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">How easy it is to integrate and tune.</div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Free or paid/cloud?</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Typical table scenarios.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Whether this is the right
+                                    table tool for your multi-PDF RAG on CPU and reason.</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="camelot">
+                            <td><b>Camelot</b>
+                                <div class="small">lattice & stream</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Vector PDFs with clear table borders (best choice)</td>
+                            <td>✅ <em>Primary table extractor</em> — best for native PDFs; pair with OCR fallback for
+                                scanned tables in RAG.</td>
+                        </tr>
+
+                        <tr data-name="tabula">
+                            <td><b>Tabula (tabula-py)</b>
+                                <div class="small">Java backend</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Wide range of vector PDF tables (complement to Camelot)</td>
+                            <td>Good secondary option if Camelot misses tables; requires Java — useful to include in RAG
+                                toolchain.</td>
+                        </tr>
+
+                        <tr data-name="pdfplumber tables">
+                            <td><b>pdfplumber</b>
+                                <div class="small">primitive + coords</div>
+                            </td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Medium-Advanced</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Custom table reconstruction with coordinates</td>
+                            <td>Useful when Camelot/Tabula fail — you can build custom heuristics for RAG table
+                                fidelity.</td>
+                        </tr>
+
+                        <tr data-name="doctr tables">
+                            <td><b>DocTR / LayoutLM</b>
+                                <div class="small">ML-based</div>
+                            </td>
+                            <td><span class="metric">Slow (CPU)</span></td>
+                            <td><span class="metric">Moderate</span></td>
+                            <td><span class="metric">Model files</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Advanced</span></td>
+                            <td><span class="metric">Free/Open</span></td>
+                            <td class="bestfor">Scanned or complex tables (best accuracy if CPU budget exists)</td>
+                            <td>Use as a fallback when scanned tables are common — higher accuracy but CPU-heavy for RAG
+                                ingestion.</td>
+                        </tr>
+
+                        <tr data-name="commercial tables">
+                            <td><b>Cloud (Textract/DocAI)</b>
+                                <div class="small">managed</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Paid</span></td>
+                            <td class="bestfor">Enterprise table extraction (scanned & messy)</td>
+                            <td>Great for production scale and messy scanned tables — choose if cloud & budget are OK
+                                for your RAG.</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Vector DB -->
+            <section class="card" data-cat="vector_db">
+                <h2>Vector databases</h2>
+                <table data-table="vector_db">
+                    <thead>
+                        <tr>
+                            <th>DB</th>
+                            <th class="hdr">Speed<div class="tip">Query/nearest-neighbour speed for vectors.</div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">Works well on CPU / local setups?</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Does it persist vectors & metadata across
+                                    restarts?</div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">Handles big vector collections / distributed
+                                    setups?</div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">API simplicity & integration effort.</div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Free vs managed/paid options.</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Primary use-cases.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Which DB suits your
+                                    CPU-first, persistent RAG and why.</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="chroma">
+                            <td><b>ChromaDB</b>
+                                <div class="small">duckdb+parquet</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">Persistent</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Local RAG + developer-friendly persistence (recommended)</td>
+                            <td>✅ <em>Top pick</em> — local persistence, simple API, CPU-friendly and perfect for your
+                                offline RAG workflow.</td>
+                        </tr>
+
+                        <tr data-name="faiss">
+                            <td><b>FAISS</b>
+                                <div class="small">search engine</div>
+                            </td>
+                            <td><span class="metric">Very fast</span></td>
+                            <td><span class="metric">Excellent (faiss-cpu)</span></td>
+                            <td><span class="metric">File + glue code</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">High-performance local semantic search (pair with SQLite)</td>
+                            <td>Great raw speed/scalability; use if you want max performance and are willing to add
+                                metadata persistence (SQLite/JSON).</td>
+                        </tr>
+
+                        <tr data-name="milvus">
+                            <td><b>Milvus</b>
+                                <div class="small">distributed</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Moderate</span></td>
+                            <td><span class="metric">Yes</span></td>
+                            <td><span class="metric">Very high</span></td>
+                            <td><span class="metric">Hard</span></td>
+                            <td><span class="metric">Free / infra</span></td>
+                            <td class="bestfor">Large-scale production vector search</td>
+                            <td>Use for production-scale RAG only — heavier infra than needed for CPU-first prototypes.
+                            </td>
+                        </tr>
+
+                        <tr data-name="weaviate">
+                            <td><b>Weaviate</b>
+                                <div class="small">semantic DB</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Moderate</span></td>
+                            <td><span class="metric">Yes</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free/Cloud</span></td>
+                            <td class="bestfor">Hybrid search + metadata filters</td>
+                            <td>Good when you need metadata filtering & semantic search; heavier to set up locally for
+                                simple RAG.</td>
+                        </tr>
+
+                        <tr data-name="pinecone">
+                            <td><b>Pinecone / Qdrant (cloud)</b>
+                                <div class="small">managed</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">Yes</span></td>
+                            <td><span class="metric">Very high</span></td>
+                            <td><span class="metric">Very easy</span></td>
+                            <td><span class="metric">Paid</span></td>
+                            <td class="bestfor">Managed production vector search</td>
+                            <td>Choose if you want a managed cloud DB and don't mind the cost; not necessary for local
+                                CPU-first RAG.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Embeddings -->
+            <section class="card" data-cat="embeddings">
+                <h2>Embedding models</h2>
+                <table data-table="embeddings">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th class="hdr">Speed<div class="tip">How quickly embeddings are generated (higher =
+                                    faster).</div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">How practical the model is on CPU-only
+                                    environments.</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Whether embeddings are stored or re-calculated
+                                    each time.</div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">Handles many requests / batch embedding scale.
+                                </div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">Install & API simplicity.</div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Free or requires paid API.</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Typical embedding usage.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Why this embedding model
+                                    suits your Gemini RAG on CPU.</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="all-MiniLM-L6-v2">
+                            <td><b>all-MiniLM-L6-v2</b>
+                                <div class="small">sent-transformers (384-d)</div>
+                            </td>
+                            <td><span class="metric">Very fast</span></td>
+                            <td><span class="metric">Excellent (CPU)</span></td>
+                            <td><span class="metric">Model files</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Local embeddings & prototyping (recommended)</td>
+                            <td>✅ <em>Recommended</em> — fast, small, accurate enough for retrieval; ideal for
+                                CPU-hosted RAG with Gemini for generation.</td>
+                        </tr>
+
+                        <tr data-name="all-MiniLM-L12">
+                            <td><b>all-MiniLM-L12 / all-MPNet</b>
+                                <div class="small">bigger local models</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Model files</span></td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Better recall on CPU</td>
+                            <td>Use if you need a small quality boost over L6 and don't mind slightly slower embedding
+                                times.</td>
+                        </tr>
+
+                        <tr data-name="openai embeddings">
+                            <td><b>OpenAI embeddings</b>
+                                <div class="small">text-embedding-3-small/large</div>
+                            </td>
+                            <td><span class="metric">Fast (API)</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">Cloud</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Very Easy</span></td>
+                            <td><span class="metric">Paid</span></td>
+                            <td class="bestfor">Production-quality embeddings (if budget allows)</td>
+                            <td>Top quality if you accept API cost — good when you want best-in-class retrieval for RAG
+                                at scale.</td>
+                        </tr>
+
+                        <tr data-name="local large">
+                            <td><b>Local Mistral / HF</b>
+                                <div class="small">larger custom</div>
+                            </td>
+                            <td><span class="metric">Slow (CPU)</span></td>
+                            <td><span class="metric">Moderate / Poor</span></td>
+                            <td><span class="metric">Model files</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Advanced</span></td>
+                            <td><span class="metric">Free / infra</span></td>
+                            <td class="bestfor">Custom high-accuracy local setups (quantize if possible)</td>
+                            <td>Choose only if you need specialized local embeddings and can afford slower CPU inference
+                                and model ops.</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Backend storage -->
+            <section class="card" data-cat="storage">
+                <h2>Backend memory & metadata storage</h2>
+                <table data-table="storage">
+                    <thead>
+                        <tr>
+                            <th>Store</th>
+                            <th class="hdr">Speed<div class="tip">Read/write performance for common operations.</div>
+                            </th>
+                            <th class="hdr">CPU Support<div class="tip">Works fine on local CPU hosts.</div>
+                            </th>
+                            <th class="hdr">Persistence<div class="tip">Durability / data stored across restarts.</div>
+                            </th>
+                            <th class="hdr">Scalability<div class="tip">Handling large volumes & concurrent access.
+                                </div>
+                            </th>
+                            <th class="hdr">Ease of Use<div class="tip">How easy it is to integrate (APIs, setup).</div>
+                            </th>
+                            <th class="hdr">Cost<div class="tip">Free vs paid infra.</div>
+                            </th>
+                            <th class="hdr">Best For<div class="tip">Primary use-cases.</div>
+                            </th>
+                            <th class="hdr">Best Fit for My RAG Task & Why<div class="tip">Which storage fits persistent
+                                    Q/A memory + metadata for your RAG (CPU-first).</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-name="json pickle">
+                            <td><b>JSON / Pickle files</b>
+                                <div class="small">simple</div>
+                            </td>
+                            <td><span class="metric">Fast (small)</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Low</span></td>
+                            <td><span class="metric">Very Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Prototypes & single-user storage</td>
+                            <td>Good short-term memory for prototypes; simple and persistent but not for concurrent
+                                multi-user RAG.</td>
+                        </tr>
+
+                        <tr data-name="sqlite">
+                            <td><b>SQLite</b>
+                                <div class="small">file SQL</div>
+                            </td>
+                            <td><span class="metric">Good</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">File</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free</span></td>
+                            <td class="bestfor">Local structured metadata & memory</td>
+                            <td>✅ Recommended for RAG memory & metadata — lightweight, durable, and easy to query
+                                alongside Chroma/FAISS.</td>
+                        </tr>
+
+                        <tr data-name="postgres">
+                            <td><b>PostgreSQL</b>
+                                <div class="small">server DB</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">Yes</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free/Infra</span></td>
+                            <td class="bestfor">Production-grade metadata and queries</td>
+                            <td>Great for production multi-user RAG; heavier than SQLite for local CPU prototypes.</td>
+                        </tr>
+
+                        <tr data-name="redis">
+                            <td><b>Redis</b>
+                                <div class="small">in-memory</div>
+                            </td>
+                            <td><span class="metric">Very fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">Optional</span></td>
+                            <td><span class="metric">High</span></td>
+                            <td><span class="metric">Easy</span></td>
+                            <td><span class="metric">Free/Infra</span></td>
+                            <td class="bestfor">Short-term conversation memory & caching</td>
+                            <td>Excellent for caching session memory in RAG; combine with SQLite for durable storage.
+                            </td>
+                        </tr>
+
+                        <tr data-name="vector metadata">
+                            <td><b>Vector DB metadata</b>
+                                <div class="small">Chroma/Weaviate</div>
+                            </td>
+                            <td><span class="metric">Fast</span></td>
+                            <td><span class="metric">Excellent</span></td>
+                            <td><span class="metric">Yes</span></td>
+                            <td><span class="metric">Medium-High</span></td>
+                            <td><span class="metric">Medium</span></td>
+                            <td><span class="metric">Free/Cloud</span></td>
+                            <td class="bestfor">Attach source/page info to vectors for RAG</td>
+                            <td>Store metadata with vectors in Chroma — recommended for source attribution in RAG
+                                answers.</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </section>
+
+        </main>
+
+        <footer>
+            Tip: For a CPU-first prototype use <b>PyMuPDF + Camelot + Tesseract + all-MiniLM-L6-v2 + ChromaDB +
+                SQLite</b>.
+        </footer>
+    </div>
+
+    <script>
+        const qEl = document.getElementById('q');
+        const catEl = document.getElementById('category');
+        qEl.addEventListener('input', filterAll);
+        catEl.addEventListener('change', filterAll);
+
+        function filterAll() {
+            const q = qEl.value.trim().toLowerCase();
+            const cat = catEl.value;
+            const cards = document.querySelectorAll('#cards section.card');
+            cards.forEach(card => {
+                const cardCat = card.getAttribute('data-cat') || 'all';
+                // category filter
+                if (cat !== 'all' && cardCat !== cat) {
+                    card.style.display = 'none';
+                    return;
+                } else {
+                    card.style.display = '';
+                }
+                // inside each table, filter rows
+                const rows = card.querySelectorAll('tbody tr');
+                rows.forEach(r => {
+                    const name = (r.getAttribute('data-name') || '').toLowerCase();
+                    const text = r.innerText.toLowerCase();
+                    if (q === '' || name.includes(q) || text.includes(q)) {
+                        r.style.display = '';
+                    } else {
+                        r.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // click row to show details in console (useful for dev)
+        document.querySelectorAll('tbody tr').forEach(tr => {
+            tr.addEventListener('click', () => {
+                console.log('Selected:', tr.getAttribute('data-name') || tr.innerText);
+                tr.style.boxShadow = 'inset 0 0 0 2px rgba(96,165,250,0.06)';
+                setTimeout(() => tr.style.boxShadow = '', 400);
+            });
+        });
+    </script>
+</body>
+
+</html>

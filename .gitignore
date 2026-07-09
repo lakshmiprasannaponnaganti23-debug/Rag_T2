@@ -1,0 +1,6 @@
+.env
+chroma_db/
+uploads/
+chat_history.json
+__pycache__/
+*.pyc

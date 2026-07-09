@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PDF RAG Chat (Gemini)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --accent: #6ea8fe;
+    --accent-dark: #4a7fd6;
+    --text: #e8e9ec;
+    --muted: #9aa0ab;
+    --user-bubble: #6ea8fe;
+    --bot-bubble: #232733;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+  }
+  .sidebar {
+    width: 320px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+  .sidebar h1 {
+    font-size: 18px;
+    margin: 0 0 4px 0;
+  }
+  .sidebar p.subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 8px 0;
+  }
+  .upload-box {
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .upload-box input[type=file] {
+    width: 100%;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #0f1115; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-danger { background: #4a2130; color: #ff9caa; }
+  .file-list {
+    font-size: 12px;
+    color: var(--muted);
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .file-list .item { padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .status-msg { font-size: 12px; color: var(--accent); min-height: 16px; }
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .chat-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-window {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bubble-row { display: flex; }
+  .bubble-row.user { justify-content: flex-end; }
+  .bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .bubble.user { background: var(--user-bubble); color: #0f1115; border-bottom-right-radius: 2px; }
+  .bubble.bot { background: var(--bot-bubble); color: var(--text); border-bottom-left-radius: 2px; }
+  .bubble .meta {
+    display: block;
+    font-size: 10.5px;
+    opacity: 0.6;
+    margin-top: 6px;
+  }
+  .input-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+  .input-bar input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #10131a;
+    color: var(--text);
+    font-size: 14.5px;
+  }
+  .input-bar input:focus { outline: none; border-color: var(--accent); }
+  .empty-state {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .typing { color: var(--muted); font-style: italic; font-size: 13px; }
+</style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div>
+      <h1>📄 PDF RAG Chat</h1>
+      <p class="subtitle">Powered by Gemini + vector search</p>
+    </div>
+
+    <div class="upload-box">
+      <input type="file" id="fileInput" multiple accept="application/pdf">
+      <div style="margin-top:10px;">
+        <button class="btn-primary" id="uploadBtn" style="width:100%;">Upload PDFs</button>
+      </div>
+    </div>
+    <div class="status-msg" id="uploadStatus"></div>
+    <div class="file-list" id="fileList"></div>
+
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
+      <button class="btn-secondary" id="reloadHistoryBtn">Reload Chat History</button>
+      <button class="btn-danger" id="resetBtn">Clear All Data</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chat-header">
+      <strong>Ask questions about your uploaded PDFs</strong>
+    </div>
+    <div class="chat-window" id="chatWindow">
+      <div class="empty-state" id="emptyState">
+        Upload one or more PDFs on the left, then ask a question here.<br>
+        Your previous questions and answers are remembered too — feel free to ask follow-ups.
+      </div>
+    </div>
+    <div class="input-bar">
+      <input type="text" id="questionInput" placeholder="Ask a question... (Enter to send)">
+      <button class="btn-primary" id="sendBtn">Send</button>
+    </div>
+  </div>
+
+<script>
+const chatWindow = document.getElementById('chatWindow');
+const emptyState = document.getElementById('emptyState');
+const questionInput = document.getElementById('questionInput');
+const sendBtn = document.getElementById('sendBtn');
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const uploadStatus = document.getElementById('uploadStatus');
+const fileList = document.getElementById('fileList');
+const resetBtn = document.getElementById('resetBtn');
+const reloadHistoryBtn = document.getElementById('reloadHistoryBtn');
+
+function addBubble(text, who, meta) {
+  emptyState.style.display = 'none';
+  const row = document.createElement('div');
+  row.className = 'bubble-row ' + (who === 'user' ? 'user' : '');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+  bubble.textContent = text;
+  if (meta) {
+    const metaEl = document.createElement('span');
+    metaEl.className = 'meta';
+    metaEl.textContent = meta;
+    bubble.appendChild(metaEl);
+  }
+  row.appendChild(bubble);
+  chatWindow.appendChild(row);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  return row;
+}
+
+async function loadHistory() {
+  chatWindow.innerHTML = '';
+  try {
+    const res = await fetch('/history');
+    const history = await res.json();
+    if (!history.length) {
+      chatWindow.appendChild(emptyState);
+      emptyState.style.display = 'block';
+      return;
+    }
+    history.forEach(item => {
+      addBubble(item.question, 'user');
+      addBubble(item.answer, 'bot', new Date(item.timestamp).toLocaleString());
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+uploadBtn.addEventListener('click', async () => {
+  const files = fileInput.files;
+  if (!files.length) {
+    uploadStatus.textContent = 'Please choose at least one PDF file.';
+    return;
+  }
+  const formData = new FormData();
+  for (const f of files) formData.append('files', f);
+
+  uploadBtn.disabled = true;
+  uploadStatus.textContent = 'Uploading and processing PDFs...';
+
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) {
+      uploadStatus.textContent = 'Error: ' + data.error;
+    } else {
+      uploadStatus.textContent = `Done. Added ${data.total_chunks_added} chunks.`;
+      fileList.innerHTML = '';
+      data.files.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.textContent = f.error
+          ? `${f.filename}: ${f.error}`
+          : `${f.filename} — ${f.pages} pages, ${f.chunks} chunks`;
+        fileList.appendChild(div);
+      });
+    }
+  } catch (e) {
+    uploadStatus.textContent = 'Upload failed: ' + e;
+  } finally {
+    uploadBtn.disabled = false;
+  }
+});
+
+async function sendQuestion() {
+  const question = questionInput.value.trim();
+  if (!question) return;
+  questionInput.value = '';
+  addBubble(question, 'user');
+
+  const typingRow = addBubble('Thinking...', 'bot');
+  typingRow.querySelector('.bubble').classList.add('typing');
+
+  sendBtn.disabled = true;
+  try {
+    const res = await fetch('/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json();
+    typingRow.remove();
+    if (data.error) {
+      addBubble('Error: ' + data.error, 'bot');
+    } else {
+      addBubble(data.answer, 'bot');
+    }
+  } catch (e) {
+    typingRow.remove();
+    addBubble('Request failed: ' + e, 'bot');
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+sendBtn.addEventListener('click', sendQuestion);
+questionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendQuestion();
+});
+
+resetBtn.addEventListener('click', async () => {
+  if (!confirm('This will delete all uploaded PDFs and chat history. Continue?')) return;
+  await fetch('/reset', { method: 'POST' });
+  fileList.innerHTML = '';
+  uploadStatus.textContent = 'All data cleared.';
+  loadHistory();
+});
+
+reloadHistoryBtn.addEventListener('click', loadHistory);
+
+loadHistory();
+</script>
+</body>
+</html>
